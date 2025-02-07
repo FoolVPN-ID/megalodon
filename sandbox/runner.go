@@ -21,8 +21,13 @@ var connectivityTestList = []string{
 
 func testSingConfigWithContext(singConfig option.Options, ctx context.Context) (configGeoipStruct, error) {
 	// Re-allocate free port
-	freePort := helper.GetFreePort()
-	singConfig.Inbounds[0].MixedOptions.ListenPort = uint16(freePort)
+	var (
+		freePort     = helper.GetFreePort()
+		mixedOptions = singConfig.Inbounds[0].Options.(*option.HTTPMixedInboundOptions)
+	)
+
+	mixedOptions.ListenPort = uint16(freePort)
+	singConfig.Inbounds[0].Options = mixedOptions
 
 	configGeoip := configGeoipStruct{}
 	boxInstance, err := box.New(box.Options{

@@ -3,7 +3,6 @@ package database
 import (
 	"context"
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"os"
 	"runtime"
@@ -15,6 +14,7 @@ import (
 	logger "github.com/FoolVPN-ID/megalodon/log"
 	"github.com/FoolVPN-ID/megalodon/sandbox"
 	"github.com/FoolVPN-ID/megalodon/telegram/bot"
+	"github.com/sagernet/sing/common/json"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
 
@@ -154,8 +154,7 @@ func (db *databaseStruct) buildInsertQuery(results []sandbox.TestResultStruct) [
 
 		var (
 			outboundMapping = map[string]any{}
-			outboundAny, _  = outbound.RawOptions()
-			outboundByte, _ = json.Marshal(outboundAny)
+			outboundByte, _ = json.Marshal(outbound.Options)
 		)
 		json.Unmarshal(outboundByte, &outboundMapping)
 

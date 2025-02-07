@@ -3,7 +3,6 @@ package sandbox
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"sync"
 	"time"
@@ -11,7 +10,10 @@ import (
 	"github.com/FoolVPN-ID/megalodon/common/helper"
 	logger "github.com/FoolVPN-ID/megalodon/log"
 	"github.com/FoolVPN-ID/tool/modules/config"
+	box "github.com/sagernet/sing-box"
+	"github.com/sagernet/sing-box/include"
 	"github.com/sagernet/sing-box/option"
+	"github.com/sagernet/sing/common/json"
 )
 
 var (
@@ -41,8 +43,7 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 
 	// Generate and check md5
 	var (
-		outbound, _     = singConfig.Outbounds[0].RawOptions()
-		outboundByte, _ = json.Marshal(outbound)
+		outboundByte, _ = json.Marshal(singConfig.Outbounds[0].Options)
 		outboundMd5     = helper.GetMD5FromString(string(outboundByte))
 	)
 	for _, id := range sb.ids {
@@ -101,11 +102,18 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 		if err != nil {
 			return err
 		}
-		configForTest.UnmarshalJSON(configForTestByte)
+
+		ctx := context.Background()
+		ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry())
+		err = configForTest.UnmarshalJSONContext(ctx, configForTestByte)
+		if err != nil {
+			return err
+		}
 
 		// Close closure variable
 		func(connMode string) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry())
 			defer cancel()
 
 			if configGeoip, err := testSingConfigWithContext(configForTest, ctx); err == nil {
