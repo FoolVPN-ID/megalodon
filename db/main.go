@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"regexp"
 	"runtime"
 	"strings"
 	"sync"
@@ -17,6 +18,8 @@ import (
 	"github.com/sagernet/sing/common/json"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
+
+var safePattern = regexp.MustCompile("[^A-Za-z0-9-]")
 
 type databaseStruct struct {
 	client          *sql.DB
@@ -101,7 +104,17 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 	db.queries = append(db.queries, "DELETE FROM proxies;")
 	db.queries = append(db.queries, db.buildInsertQuery(results)...)
 
-	tgb := bot.MakeTGgBot()
+	var (
+		err error
+		tgb = bot.MakeTGgBot()
+	)
+
+	defer func() {
+		if err != nil {
+			tgb.SendTextFileToAdmin(fmt.Sprintf("error_query_%v.txt", time.Now().Unix()), err.Error(), "Error Query")
+		}
+	}()
+
 	tgb.SendTextFileToAdmin(fmt.Sprintf("query_%v.txt", time.Now().Unix()), strings.Join(db.queries, "\n"), "DB Query")
 	if len(db.ErrorValues) > 0 {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
@@ -173,10 +186,10 @@ func (db *databaseStruct) buildInsertQuery(results []sandbox.TestResultStruct) [
 
 		// Here we go assertion hell
 		if uuid, ok := outboundMapping["uuid"].(string); ok {
-			fieldValues.UUID = uuid
+			fieldValues.UUID = safePattern.ReplaceAllString(uuid, "")
 		}
 		if password, ok := outboundMapping["password"].(string); ok {
-			fieldValues.Password = password
+			fieldValues.Password = safePattern.ReplaceAllString(password, "")
 		}
 		if security, ok := outboundMapping["security"].(string); ok {
 			fieldValues.Security = security
