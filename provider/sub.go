@@ -3,6 +3,7 @@ package provider
 import (
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -112,5 +113,8 @@ func (prov *providerStruct) GatherNodes() {
 func (prov *providerStruct) addNode(node string) {
 	prov.Lock()
 	defer prov.Unlock()
-	prov.Nodes = append(prov.Nodes, node)
+
+	if !slices.Contains(prov.Nodes, node) {
+		prov.Nodes = append(prov.Nodes, node)
+	}
 }
