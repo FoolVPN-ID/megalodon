@@ -22,7 +22,7 @@ func main() {
 		db       = database.MakeDatabase()
 		prov     = provider.MakeSubProvider()
 		sb       = sandbox.MakeSandbox()
-		maxNodes = 100
+		maxNodes = 100000
 	)
 
 	// Deferred functions
@@ -96,6 +96,7 @@ func main() {
 	// Save results to database
 	logger.Info("Saving results to database...")
 	bot.SendTextToAdmin("Saving result to database...")
+	db.Ping()
 	if err := db.Save(sb.Results); err != nil {
 		panic(err)
 	}

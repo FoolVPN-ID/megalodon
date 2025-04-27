@@ -50,11 +50,22 @@ func (db *databaseStruct) connect() {
 		panic(err.Error())
 	}
 
+	db.logger.Success("[db] Client initialized")
 	db.client = client
 }
 
+func (db *databaseStruct) Ping() {
+	db.logger.Info("[db] Pinging...")
+	if err := db.client.Ping(); err != nil {
+		db.logger.Error("[db] Closed, initializing new client...")
+		db.connect()
+	} else {
+		db.logger.Success("[db] Alive")
+	}
+}
+
 func (db *databaseStruct) SyncAndClose() {
-	db.logger.Info("Closing client...")
+	db.logger.Info("[db] Closing client")
 	if err := db.client.Close(); err != nil {
 		db.logger.Error(err.Error())
 	}
@@ -92,7 +103,7 @@ func (db *databaseStruct) createTableSafe() {
 	)
 
 	if _, err := db.client.Query(crateTableQuery); err == nil {
-		db.logger.Info("Database successfully created!")
+		db.logger.Info("[db] Table created")
 	} else {
 		db.logger.Error(err.Error())
 		os.Exit(1)
@@ -144,7 +155,7 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 		return err
 	} else {
 		db.logger.Info("=========================")
-		db.logger.Success("Data successfully saved!")
+		db.logger.Success("[db] Insert operation succeed")
 		db.logger.Info(fmt.Sprintf("Total raw account: %d", db.rawAccountTotal))
 		db.logger.Info(fmt.Sprintf("Total account saved: %d", len(db.uniqueIds)))
 
