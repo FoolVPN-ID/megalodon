@@ -106,7 +106,6 @@ func (db *databaseStruct) createTableSafe() {
 		db.logger.Info("[db] Table created")
 	} else {
 		db.logger.Error(err.Error())
-		os.Exit(1)
 	}
 }
 
