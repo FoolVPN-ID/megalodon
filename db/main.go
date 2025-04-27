@@ -7,6 +7,7 @@ import (
 	"os"
 	"regexp"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -374,10 +375,7 @@ func (db *databaseStruct) buildInsertQuery(results []sandbox.TestResultStruct) [
 	}
 
 	for i := 0; i < len(values); i += valueLength {
-		end := i + valueLength
-		if end > len(values) {
-			end = len(values)
-		}
+		end := min(i+valueLength, len(values))
 		insertQueries = append(insertQueries, fmt.Sprintf(`%s %s;`, baseInsertQuery, strings.Join(helper.RemoveEmptyStringFromList(values[i:end]), ",")))
 	}
 
@@ -398,10 +396,8 @@ func (db *databaseStruct) makeUniqueId(field ProxyFieldStruct) string {
 
 func (db *databaseStruct) checkIsExists(field ProxyFieldStruct) bool {
 	uid := db.makeUniqueId(field)
-	for _, existedUid := range db.uniqueIds {
-		if existedUid == uid {
-			return true
-		}
+	if slices.Contains(db.uniqueIds, uid) {
+		return true
 	}
 
 	db.uniqueIds = append(db.uniqueIds, uid)
