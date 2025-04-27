@@ -17,11 +17,12 @@ func main() {
 	godotenv.Load()
 
 	var (
-		bot    = bot.MakeTGgBot()
-		logger = logger.MakeLogger()
-		db     = database.MakeDatabase()
-		prov   = provider.MakeSubProvider()
-		sb     = sandbox.MakeSandbox()
+		bot      = bot.MakeTGgBot()
+		logger   = logger.MakeLogger()
+		db       = database.MakeDatabase()
+		prov     = provider.MakeSubProvider()
+		sb       = sandbox.MakeSandbox()
+		maxNodes = 100
 	)
 
 	// Deferred functions
@@ -64,7 +65,7 @@ func main() {
 		wg.Add(1)
 		queue <- struct{}{}
 
-		logger.Info(fmt.Sprintf("[%d/%d] Testing..., current succeed: %d", i, nodesCount, len(sb.Results)))
+		// logger.Info(fmt.Sprintf("[%d/%d] Testing..., current succeed: %d", i, nodesCount, len(sb.Results)))
 		go func(node string, currentCount, maxCount int) {
 			defer func() {
 				if err := recover(); err != nil {
@@ -79,6 +80,10 @@ func main() {
 				logger.Error(err.Error())
 			}
 		}(rawConfig, i, nodesCount)
+
+		if len(sb.Results) > maxNodes {
+			break
+		}
 	}
 
 	// Wait for all concurrency to be done

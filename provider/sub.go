@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"slices"
@@ -59,7 +60,6 @@ func (prov *providerStruct) GatherNodes() {
 			wg.Add(1)
 			queue <- struct{}{}
 
-			prov.logger.Info(fmt.Sprintf("[[%d/%d]%d/%d] [%d] %s\n", x, len(subUrls), i, len(prov.subs), len(prov.Nodes), subUrl))
 			go (func() {
 				defer func() {
 					wg.Done()
@@ -79,28 +79,47 @@ func (prov *providerStruct) GatherNodes() {
 				}
 
 				if resp.StatusCode == 200 {
-					nodes := []string{}
-					// re-Filter nodes due to some bullshit
-					for _, separator := range configSeparators {
-						if len(nodes) == 0 {
-							nodes = append(nodes, strings.Split(helper.DecodeBase64Safe(string(resp.Body)), separator)...)
-						} else {
-							filteredNodes := []string{}
-							for _, node := range nodes {
-								filteredNodes = append(filteredNodes, strings.Split(node, separator)...)
-							}
+					var (
+						nodes    = []string{}
+						textBody = string(resp.Body)
+					)
 
-							nodes = filteredNodes
-						}
+					if len(textBody) < 100 {
+						return
 					}
 
+					if !strings.Contains(textBody, "://") {
+						parsedBody := helper.DecodeBase64Safe(textBody)
+						if parsedBody == textBody {
+							if parsedBodyByte, err := base64.StdEncoding.DecodeString(textBody); err == nil {
+								parsedBody = string(parsedBodyByte)
+							} else {
+								if parsedBodyByte, err = base64.RawStdEncoding.DecodeString(textBody); err == nil {
+									parsedBody = string(parsedBodyByte)
+								} else {
+									prov.logger.Error(err.Error())
+								}
+							}
+						}
+
+						textBody = parsedBody
+					}
+
+					for _, separator := range configSeparators {
+						nodes = append(nodes, strings.Split(textBody, separator)...)
+					}
+
+					var addedNodesCount = 0
 					for _, node := range nodes {
 						for _, acceptedType := range constant.ACCEPTED_TYPES {
 							if strings.HasPrefix(node, acceptedType) {
+								addedNodesCount += 1
 								prov.addNode(node)
 							}
 						}
 					}
+
+					prov.logger.Info(fmt.Sprintf("[[%d/%d]%d/%d] [%d] [%d] %s\n", x, len(subUrls), i, len(prov.subs), addedNodesCount, len(prov.Nodes), subUrl))
 				}
 			})()
 		}

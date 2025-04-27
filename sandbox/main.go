@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"errors"
+	"fmt"
+	"slices"
 	"sync"
 	"time"
 
@@ -19,7 +21,7 @@ import (
 var (
 	testTypes = []string{"cdn", "sni"}
 	sniHost   = "meet.google.com"
-	cdnHost   = "172.67.73.39"
+	cdnHost   = "104.18.2.2"
 )
 
 type sandboxStruct struct {
@@ -46,10 +48,9 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 		outboundByte, _ = json.Marshal(singConfig.Outbounds[0].Options)
 		outboundMd5     = helper.GetMD5FromString(string(outboundByte))
 	)
-	for _, id := range sb.ids {
-		if id == outboundMd5 {
-			return errors.New("duplicate account detected")
-		}
+
+	if slices.Contains(sb.ids, outboundMd5) {
+		return errors.New("duplicate account detected")
 	}
 	sb.ids = append(sb.ids, outboundMd5)
 
@@ -119,7 +120,7 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 			if configGeoip, err := testSingConfigWithContext(configForTest, ctx); err == nil {
 				testResult.TestPassed = append(testResult.TestPassed, connMode)
 				testResult.ConfigGeoip = configGeoip
-				// sb.log.Success(fmt.Sprintf("[%d/%d] [%d+%d] %v %s %s", accountIndex, accountTotal, len(sb.Results), len(testResult.TestPassed), testResult.TestPassed, configGeoip.Country, configGeoip.AsOrganization))
+				sb.log.Success(fmt.Sprintf("[%d/%d] [%d+%d] %v %s %s", accountIndex, accountTotal, len(sb.Results), len(testResult.TestPassed), testResult.TestPassed, configGeoip.Country, configGeoip.AsOrganization))
 			} else {
 				// sb.log.Error(fmt.Sprintf("[%d/%d] %s", accountIndex, accountTotal, err.Error()))
 			}
