@@ -127,6 +127,7 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 	}()
 
 	tgb.SendTextFileToAdmin(fmt.Sprintf("query_%v.txt", time.Now().Unix()), strings.Join(db.queries, "\n"), "DB Query")
+	os.WriteFile("query.txt", []byte(strings.Join(db.queries, "\n")), 0644)
 	if len(db.ErrorValues) > 0 {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
 	}

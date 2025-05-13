@@ -29,3 +29,7 @@ jobs:
 
       - name: Run
         run: ./megalodon
+
+      - name: Save results
+        run: |
+          curl --header "Content-Type: application/json" -d "{\"query\": \"$(cat query.txt | tr -d \\n\\t)\"}" https://api.foolvpn.me/db/${{ secrets.API_TOKEN }}/exec
