@@ -96,7 +96,6 @@ func main() {
 	// Save results to database
 	logger.Info("Saving results to database...")
 	bot.SendTextToAdmin("Saving result to database...")
-	db.Ping()
 	if err := db.Save(sb.Results); err != nil {
 		panic(err)
 	}

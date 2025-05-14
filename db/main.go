@@ -31,6 +31,7 @@ type databaseStruct struct {
 	uniqueIds       []string
 	queries         []string
 	ErrorValues     []string
+	ApiToken        string
 }
 
 func MakeDatabase() *databaseStruct {
@@ -41,6 +42,11 @@ func MakeDatabase() *databaseStruct {
 	}
 
 	dbInstance.connect()
+
+	row := dbInstance.client.QueryRow("SELECT value FROM kv WHERE key = ?", "apiToken")
+	if err := row.Scan(&dbInstance.ApiToken); err != nil {
+		dbInstance.logger.Error(err.Error())
+	}
 
 	return &dbInstance
 }
@@ -53,16 +59,6 @@ func (db *databaseStruct) connect() {
 
 	db.logger.Success("[db] Client initialized")
 	db.client = client
-}
-
-func (db *databaseStruct) Ping() {
-	db.logger.Info("[db] Pinging...")
-	if err := db.client.Ping(); err != nil {
-		db.logger.Error("[db] Closed, initializing new client...")
-		db.connect()
-	} else {
-		db.logger.Success("[db] Alive")
-	}
 }
 
 func (db *databaseStruct) SyncAndClose() {
@@ -119,13 +115,6 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
 	}
 
-	var apiToken string
-	row := db.client.QueryRow("SELECT value FROM kv WHERE key = ?", "apiToken")
-	if err = row.Scan(&apiToken); err != nil {
-		db.logger.Error(err.Error())
-		return err
-	}
-
 	session := azuretls.NewSession()
 	defer session.Close()
 
@@ -133,7 +122,7 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 		{"Content-Type", "application/json"},
 	}
 
-	_, err = session.Post(fmt.Sprintf("https://api.foolvpn.me/db/%s/exec", apiToken), map[string]string{"query": strings.Join(db.queries, "")})
+	_, err = session.Post(fmt.Sprintf("https://api.foolvpn.me/db/%s/exec", db.ApiToken), map[string]string{"query": strings.Join(db.queries, "")})
 	if err != nil {
 		db.logger.Error(err.Error())
 		return err
