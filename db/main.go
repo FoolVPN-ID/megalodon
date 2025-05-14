@@ -1,7 +1,6 @@
 package database
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -16,6 +15,7 @@ import (
 	logger "github.com/FoolVPN-ID/megalodon/log"
 	"github.com/FoolVPN-ID/megalodon/sandbox"
 	"github.com/FoolVPN-ID/megalodon/telegram/bot"
+	"github.com/Noooste/azuretls-client"
 	"github.com/sagernet/sing/common/json"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
@@ -72,9 +72,8 @@ func (db *databaseStruct) SyncAndClose() {
 	}
 }
 
-func (db *databaseStruct) createTableSafe() {
-	var (
-		crateTableQuery = `CREATE TABLE IF NOT EXISTS proxies (
+func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
+	db.queries = append(db.queries, `CREATE TABLE IF NOT EXISTS proxies (
 			id INTEGER PRIMARY KEY,
 			server STRING,
 			ip STRING,
@@ -100,19 +99,8 @@ func (db *databaseStruct) createTableSafe() {
 			org STRING,
 			vpn STRING,
 			raw STRING
-		);`
-	)
-
-	if _, err := db.client.Query(crateTableQuery); err == nil {
-		db.logger.Info("[db] Table created")
-	} else {
-		db.logger.Error(err.Error())
-	}
-}
-
-func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
-	db.createTableSafe()
-	db.queries = append(db.queries, "DELETE FROM proxies;")
+		);`)
+	db.queries = append(db.queries, "DELETE FROM proxies WHERE (id);")
 	db.queries = append(db.queries, db.buildInsertQuery(results)...)
 
 	var (
@@ -127,31 +115,26 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 	}()
 
 	tgb.SendTextFileToAdmin(fmt.Sprintf("query_%v.txt", time.Now().Unix()), strings.Join(db.queries, "\n"), "DB Query")
-	os.WriteFile("query.txt", []byte(strings.Join(db.queries, "\n")), 0644)
 	if len(db.ErrorValues) > 0 {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
 	}
 
-	// Begin transaction
-	txCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
-	defer cancel()
-
-	transaction, err := db.client.BeginTx(txCtx, nil)
-	if err != nil {
+	var apiToken string
+	row := db.client.QueryRow("SELECT value FROM kv WHERE key = ?", "apiToken")
+	if err = row.Scan(&apiToken); err != nil {
 		db.logger.Error(err.Error())
 		return err
 	}
 
-	for _, dbQuery := range db.queries {
-		if _, err := transaction.Exec(dbQuery); err != nil {
-			transaction.Rollback()
-			db.logger.Error(err.Error())
-			return err
-		}
+	session := azuretls.NewSession()
+	defer session.Close()
+
+	session.OrderedHeaders = azuretls.OrderedHeaders{
+		{"Content-Type", "application/json"},
 	}
 
-	if err := transaction.Commit(); err != nil {
-		transaction.Rollback()
+	_, err = session.Post(fmt.Sprintf("https://api.foolvpn.me/db/%s/exec", apiToken), map[string]string{"query": strings.Join(db.queries, "")})
+	if err != nil {
 		db.logger.Error(err.Error())
 		return err
 	} else {
