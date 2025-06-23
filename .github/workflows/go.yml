@@ -20,12 +20,15 @@ jobs:
       - name: Setup Go environment
         uses: actions/setup-go@v5.2.0
 
-      - name: Override DNS
-        run: |
-          echo "nameserver 1.1.1.1" | sudo tee /etc/resolv.conf > /dev/null
-
       - name: Build
         run: go build -tags with_utls,with_grpc -o megalodon ./main.go
 
       - name: Run
         run: ./megalodon
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1.14.0
+        with:
+          artifacts: "query.txt"
+          allowUpdates: true
+          tag: "latest"
