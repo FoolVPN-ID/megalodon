@@ -105,7 +105,7 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 		}
 
 		ctx := context.Background()
-		ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry())
+		ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry(), include.ServiceRegistry())
 		err = configForTest.UnmarshalJSONContext(ctx, configForTestByte)
 		if err != nil {
 			return err
@@ -114,7 +114,7 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 		// Close closure variable
 		func(connMode string) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry())
+			ctx = box.Context(ctx, include.InboundRegistry(), include.OutboundRegistry(), include.EndpointRegistry(), include.DNSTransportRegistry(), include.ServiceRegistry())
 			defer cancel()
 
 			if configGeoip, err := testSingConfigWithContext(configForTest, ctx); err == nil {
