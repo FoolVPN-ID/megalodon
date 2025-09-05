@@ -25,10 +25,3 @@ jobs:
 
       - name: Run
         run: ./megalodon
-
-      - name: Create Release
-        uses: ncipollo/release-action@v1.14.0
-        with:
-          artifacts: "query.txt"
-          allowUpdates: true
-          tag: "latest"

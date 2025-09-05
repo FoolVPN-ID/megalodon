@@ -15,8 +15,7 @@ import (
 
 var orgPattern = regexp.MustCompile(`(\w*)`)
 var connectivityTestList = []string{
-	"https://myip.shylook.workers.dev",
-	"https://cloudflare-ip.html.zone/geo",
+	"https://myip.ipeek.workers.dev",
 }
 
 func testSingConfigWithContext(singConfig option.Options, ctx context.Context) (configGeoipStruct, error) {
@@ -29,7 +28,10 @@ func testSingConfigWithContext(singConfig option.Options, ctx context.Context) (
 	mixedOptions.ListenPort = uint16(freePort)
 	singConfig.Inbounds[0].Options = mixedOptions
 
-	configGeoip := configGeoipStruct{}
+	configGeoip := configGeoipStruct{
+		Country:        "XX",
+		AsOrganization: "Megalodon",
+	}
 	boxInstance, err := box.New(box.Options{
 		Context: ctx,
 		Options: singConfig,
