@@ -11,7 +11,7 @@ import (
 
 	"github.com/FoolVPN-ID/megalodon/common/helper"
 	"github.com/FoolVPN-ID/megalodon/constant"
-	"github.com/Noooste/azuretls-client"
+	fastshot "github.com/opus-domini/fast-shot"
 )
 
 var configSeparators = []string{"\n", "|", ",", "<br/>"}
@@ -29,18 +29,18 @@ func (prov *providerStruct) GatherSubFile() {
 
 	for _, subFileUrl := range subFileUrls {
 		func() {
-			session := azuretls.NewSession()
-			defer session.Close()
+			resp, err := fastshot.NewClient(subFileUrl).
+				Config().SetTimeout(10 * time.Second).
+				Build().GET("").Send()
 
-			resp, err := session.Get(subFileUrl)
 			if err != nil {
 				prov.logger.Error(err.Error())
 				return
 			}
 
-			if resp.StatusCode == 200 {
+			if resp.Status().Code() == 200 {
 				var subFile = []providerSubStruct{}
-				if err := json.Unmarshal(resp.Body, &subFile); err == nil {
+				if err := resp.Body().AsJSON(&subFile); err == nil {
 					prov.subs = append(prov.subs, subFile...)
 				}
 			}
@@ -69,19 +69,17 @@ func (prov *providerStruct) GatherNodes() {
 					recover()
 				}()
 
-				session := azuretls.NewSession()
-				session.SetTimeout(10 * time.Second)
-				defer session.Close()
-
-				resp, err := session.Get(subUrl)
+				resp, err := fastshot.NewClient(subUrl).
+					Config().SetTimeout(10 * time.Second).
+					Build().GET("").Send()
 				if err != nil {
 					panic(err)
 				}
 
-				if resp.StatusCode == 200 {
+				if resp.Status().Code() == 200 {
 					var (
-						nodes    = []string{}
-						textBody = string(resp.Body)
+						nodes       = []string{}
+						textBody, _ = resp.Body().AsString()
 					)
 
 					if len(textBody) < 100 {

@@ -15,7 +15,8 @@ import (
 	logger "github.com/FoolVPN-ID/megalodon/log"
 	"github.com/FoolVPN-ID/megalodon/sandbox"
 	"github.com/FoolVPN-ID/megalodon/telegram/bot"
-	"github.com/Noooste/azuretls-client"
+	fastshot "github.com/opus-domini/fast-shot"
+	"github.com/opus-domini/fast-shot/constant/mime"
 	"github.com/sagernet/sing/common/json"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
@@ -118,14 +119,11 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
 	}
 
-	session := azuretls.NewSession()
-	defer session.Close()
+	httpClient := fastshot.NewClient("https://api.foolvpn.me").Header().AddContentType(mime.JSON).Build()
+	_, err = httpClient.POST(fmt.Sprintf("/db/%s/exec", db.ApiToken)).Body().AsJSON(map[string]any{
+		"query": strings.Join(db.queries, ""),
+	}).Send()
 
-	session.OrderedHeaders = azuretls.OrderedHeaders{
-		{"Content-Type", "application/json"},
-	}
-
-	_, err = session.Post(fmt.Sprintf("https://api.foolvpn.me/db/%s/exec", db.ApiToken), map[string]string{"query": strings.Join(db.queries, "")})
 	if err != nil {
 		db.logger.Error(err.Error())
 		return err

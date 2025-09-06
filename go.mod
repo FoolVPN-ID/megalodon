@@ -7,9 +7,9 @@ toolchain go1.24.5
 require (
 	github.com/FoolVPN-ID/tool v0.0.0-20250905121227-fe0421a9749a
 	github.com/NicoNex/echotron/v3 v3.43.0
-	github.com/Noooste/azuretls-client v1.6.2
 	github.com/fatih/color v1.18.0
 	github.com/joho/godotenv v1.5.1
+	github.com/opus-domini/fast-shot v1.1.4
 	github.com/sagernet/sing v0.7.7
 	github.com/sagernet/sing-box v1.12.4
 	github.com/tursodatabase/libsql-client-go v0.0.0-20240902231107-85af5b9d094d
@@ -17,9 +17,6 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
-	github.com/Noooste/fhttp v1.0.12 // indirect
-	github.com/Noooste/utls v1.3.1 // indirect
-	github.com/Noooste/websocket v1.0.3 // indirect
 	github.com/ajg/form v1.5.1 // indirect
 	github.com/akutz/memconn v0.1.0 // indirect
 	github.com/alexbrainman/sspi v0.0.0-20231016080023-1a75b4708caa // indirect
@@ -29,7 +26,6 @@ require (
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
 	github.com/caddyserver/certmagic v0.25.0 // indirect
 	github.com/caddyserver/zerossl v0.1.3 // indirect
-	github.com/cloudflare/circl v1.6.1 // indirect
 	github.com/coder/websocket v1.8.13 // indirect
 	github.com/coreos/go-iptables v0.8.0 // indirect
 	github.com/cretz/bine v0.2.0 // indirect

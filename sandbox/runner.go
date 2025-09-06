@@ -2,13 +2,13 @@ package sandbox
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/FoolVPN-ID/megalodon/common/helper"
-	"github.com/Noooste/azuretls-client"
+	fastshot "github.com/opus-domini/fast-shot"
 	box "github.com/sagernet/sing-box"
 	"github.com/sagernet/sing-box/option"
 )
@@ -46,23 +46,18 @@ func testSingConfigWithContext(singConfig option.Options, ctx context.Context) (
 		return configGeoip, err
 	}
 
-	session := azuretls.NewSessionWithContext(ctx)
-	session.InsecureSkipVerify = true
-	defer session.Close()
-
-	session.SetProxy(fmt.Sprintf("socks5://0.0.0.0:%v", freePort))
-
 	for _, connectivityTest := range connectivityTestList {
-		if err := session.Connect(connectivityTest); err != nil {
-			return configGeoip, err
-		}
+		httpClient := fastshot.NewClient(connectivityTest).
+			Config().SetProxy(fmt.Sprintf("socks5://0.0.0.0:%d", int(freePort))).
+			Config().SetTimeout(10 * time.Second).
+			Build()
 
-		resp, err := session.Get(connectivityTest)
+		resp, err := httpClient.GET("").Send()
 		if err != nil {
 			return configGeoip, err
 		} else {
-			if resp.StatusCode == 200 {
-				json.Unmarshal(resp.Body, &configGeoip)
+			if resp.Status().Code() == 200 {
+				resp.Body().AsJSON(&configGeoip)
 			}
 		}
 
