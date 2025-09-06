@@ -22,7 +22,7 @@ func main() {
 		db       = database.MakeDatabase()
 		prov     = provider.MakeSubProvider()
 		sb       = sandbox.MakeSandbox()
-		maxNodes = 10000
+		maxNodes = 1000
 	)
 
 	// Deferred functions

@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"os"
@@ -15,8 +16,6 @@ import (
 	logger "github.com/FoolVPN-ID/megalodon/log"
 	"github.com/FoolVPN-ID/megalodon/sandbox"
 	"github.com/FoolVPN-ID/megalodon/telegram/bot"
-	fastshot "github.com/opus-domini/fast-shot"
-	"github.com/opus-domini/fast-shot/constant/mime"
 	"github.com/sagernet/sing/common/json"
 	_ "github.com/tursodatabase/libsql-client-go/libsql"
 )
@@ -69,8 +68,9 @@ func (db *databaseStruct) SyncAndClose() {
 	}
 }
 
-func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
-	db.queries = append(db.queries, `CREATE TABLE IF NOT EXISTS proxies (
+func (db *databaseStruct) createTableSafe() {
+	var (
+		crateTableQuery = `CREATE TABLE IF NOT EXISTS proxies (
 			id INTEGER PRIMARY KEY,
 			server STRING,
 			ip STRING,
@@ -96,8 +96,20 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 			org STRING,
 			vpn STRING,
 			raw STRING
-		);`)
-	db.queries = append(db.queries, "DELETE FROM proxies WHERE (id);")
+		);`
+	)
+
+	if _, err := db.client.Query(crateTableQuery); err == nil {
+		db.logger.Info("[db] Table created")
+	} else {
+		db.logger.Error(err.Error())
+		os.Exit(1)
+	}
+}
+
+func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
+	db.createTableSafe()
+	db.queries = append(db.queries, "DELETE FROM proxies;")
 	db.queries = append(db.queries, db.buildInsertQuery(results)...)
 
 	var (
@@ -111,20 +123,31 @@ func (db *databaseStruct) Save(results []sandbox.TestResultStruct) error {
 		}
 	}()
 
-	// Write query to file
-	os.WriteFile("./query.txt", []byte(strings.Join(db.queries, "\n")), 0644)
-
 	tgb.SendTextFileToAdmin(fmt.Sprintf("query_%v.txt", time.Now().Unix()), strings.Join(db.queries, "\n"), "DB Query")
 	if len(db.ErrorValues) > 0 {
 		tgb.SendTextFileToAdmin(fmt.Sprintf("error_%v.txt", time.Now().Unix()), strings.Join(db.ErrorValues, "\n"), "Error Values")
 	}
 
-	httpClient := fastshot.NewClient("https://api.foolvpn.me").Header().AddContentType(mime.JSON).Build()
-	_, err = httpClient.POST(fmt.Sprintf("/db/%s/exec", db.ApiToken)).Body().AsJSON(map[string]any{
-		"query": strings.Join(db.queries, ""),
-	}).Send()
+	// Begin transaction
+	txCtx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
 
+	transaction, err := db.client.BeginTx(txCtx, nil)
 	if err != nil {
+		db.logger.Error(err.Error())
+		return err
+	}
+
+	for _, dbQuery := range db.queries {
+		if _, err := transaction.Exec(dbQuery); err != nil {
+			transaction.Rollback()
+			db.logger.Error(err.Error())
+			return err
+		}
+	}
+
+	if err := transaction.Commit(); err != nil {
+		transaction.Rollback()
 		db.logger.Error(err.Error())
 		return err
 	} else {
