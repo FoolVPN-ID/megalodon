@@ -37,6 +37,9 @@ func main() {
 	prov.GatherSubFile()
 	prov.GatherNodes()
 
+	// Load blacklist
+	sb.LoadBlacklist()
+
 	// Goroutine goes here 💪🏻
 	var (
 		wg     = sync.WaitGroup{}
@@ -90,8 +93,9 @@ func main() {
 	logger.Info("Waiting for goroutines...")
 	wg.Wait()
 
-	// Stop reporting
+	// Finishing
 	isDone = true
+	sb.SaveBlacklist()
 
 	// Save results to database
 	logger.Info("Saving results to database...")

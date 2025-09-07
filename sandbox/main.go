@@ -50,9 +50,8 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 	)
 
 	if slices.Contains(sb.ids, outboundMd5) {
-		return errors.New("duplicate account detected")
+		return errors.New("dead account detected")
 	}
-	sb.ids = append(sb.ids, outboundMd5)
 
 	testResult := TestResultStruct{
 		Outbound:  singConfig.Outbounds[0],
@@ -129,6 +128,8 @@ func (sb *sandboxStruct) TestConfig(rawConfig string, accountIndex, accountTotal
 
 	if len(testResult.TestPassed) > 0 {
 		sb.addResult(testResult)
+	} else {
+		sb.ids = append(sb.ids, outboundMd5)
 	}
 
 	return nil

@@ -49,7 +49,7 @@ func testSingConfigWithContext(singConfig option.Options, ctx context.Context) (
 	for _, connectivityTest := range connectivityTestList {
 		httpClient := fastshot.NewClient(connectivityTest).
 			Config().SetProxy(fmt.Sprintf("socks5://0.0.0.0:%d", int(freePort))).
-			Config().SetTimeout(3 * time.Second).
+			Config().SetTimeout(5 * time.Second).
 			Build()
 
 		resp, err := httpClient.GET("").Send()
