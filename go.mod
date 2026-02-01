@@ -5,7 +5,7 @@ go 1.24.0
 toolchain go1.24.5
 
 require (
-	github.com/FoolVPN-ID/tool v0.0.0-20250905121227-fe0421a9749a
+	github.com/FoolVPN-ID/tool v0.0.0-20260201051512-846e7b04e8e5
 	github.com/NicoNex/echotron/v3 v3.43.0
 	github.com/fatih/color v1.18.0
 	github.com/joho/godotenv v1.5.1

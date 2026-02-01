@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.1.0 h1:FNf4tywRC1HmFuKW5xopWpigGjJKiJSV0Cqo0cJWDaA=
 filippo.io/edwards25519 v1.1.0/go.mod h1:BxyFTGdWcka3PhytdK4V28tE5sGfRvvvRV7EaN4VDT4=
-github.com/FoolVPN-ID/tool v0.0.0-20250905121227-fe0421a9749a h1:UgnK5iYWEMp3NkeHY/TmuuV1043y8kfTVfJtYNvdJL8=
-github.com/FoolVPN-ID/tool v0.0.0-20250905121227-fe0421a9749a/go.mod h1:w0RZal2xtLy3+Dh337hiDoTJ4x7LGHNbKhJskAAQ/2w=
+github.com/FoolVPN-ID/tool v0.0.0-20260201051512-846e7b04e8e5 h1:yUbQ/Nx7YVzX0F2KuoJbVwzULrRm61qjx91fTnqYzOk=
+github.com/FoolVPN-ID/tool v0.0.0-20260201051512-846e7b04e8e5/go.mod h1:uW1ywc4Ja0SwtFkK/uNrf/UUQOVv0lpgfn110wc2BQY=
 github.com/NicoNex/echotron/v3 v3.43.0 h1:efE2spw3mfU0Ev20m0PqqvgMSm0xHzgSxlWAEmC9RC4=
 github.com/NicoNex/echotron/v3 v3.43.0/go.mod h1:7LvjveJmezuUOeaoA3nzQduNlSPQYfq219Z+baKY04Q=
 github.com/ajg/form v1.5.1 h1:t9c7v8JUKu/XxOGBU0yjNpaMloxGEJhUkqFRq0ibGeU=
